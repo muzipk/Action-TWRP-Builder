@@ -153,11 +153,13 @@ jobs:
         swap-size-gb: 12
 
     - name: Building recovery
-      run: |
-        source build/envsetup.sh
-        export ALLOW_MISSING_DEPENDENCIES=true
-        lunch ${{ github.event.inputs.MAKEFILE_NAME }}-eng && make clean && make ${{ github.event.inputs.BUILD_TARGET }}image -j$(nproc --all)
-      working-directory: ${{ steps.pwd.outputs.workspace-folder }}
+  run: |
+    # 强制给 rsync 加上 --force 参数
+    sed -i 's/rsync -a/rsync -a --force/g' build/core/Makefile
+    source build/envsetup.sh
+    export ALLOW_MISSING_DEPENDENCIES=true
+    lunch ${{ github.event.inputs.MAKEFILE_NAME }}-eng && make clean && make recoveryimage -j$(nproc)
+  working-directory: ${{ steps.pwd.outputs.workspace-folder }}
 
     - name: Upload to Release
       uses: softprops/action-gh-release@v2
