@@ -57,11 +57,11 @@ jobs:
           source build/envsetup.sh
           export ALLOW_MISSING_DEPENDENCIES=true
           lunch twrp_pq83p02-eng
-          # 强制重新编译，防止 no work to do
-          make -B recoveryimage -j$(nproc) || make -B bootimage -j$(nproc)
+          # 先清理，再正常编译，去掉不支持的 -B 参数
+          make clean
+          make recoveryimage -j$(nproc) || make bootimage -j$(nproc)
         working-directory: workspace
 
-      # 修复路径，直接找当前的 out 目录
       - name: Check Output
         run: |
           echo "全盘搜索生成的镜像文件..."
