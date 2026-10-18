@@ -155,7 +155,7 @@ jobs:
     - name: Building recovery
   run: |
     # 强制将 rsync 命令替换为 AOSP 官方推荐的避坑写法
-sed -i 's/rsync -a/rsync -a --exclude=etc --exclude=sdcard/g' build/core/Makefile
+sed -i 's/rsync -a/rsync -a --exclude=etc --exclude=sdcard --exclude=vendor --exclude=cache/g' build/core/Makefile
     source build/envsetup.sh
     export ALLOW_MISSING_DEPENDENCIES=true
     lunch ${{ github.event.inputs.MAKEFILE_NAME }}-eng && make clean && make recoveryimage -j$(nproc)
