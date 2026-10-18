@@ -5,6 +5,10 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+# 关键修复：给工作流赋予写入权限，解决 403 报错
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -56,13 +60,20 @@ jobs:
           lunch twrp_pq83p02-eng && make clean && make recoveryimage -j$(nproc)
         working-directory: workspace
 
+      # 关键修复：在传之前，先看看出目录里到底有什么
+      - name: Check Output
+        run: |
+          echo "检查生成的文件..."
+          ls -al workspace/out/target/product/pq83p02/ || true
+        working-directory: workspace
+
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             workspace/out/target/product/pq83p02/*.img
-          name: pq83p02-newbuild
-          tag_name: newbuild-${{ github.run_id }}
+          name: pq83p02-${{ github.run_id }}
+          tag_name: build-${{ github.run_id }}
           body: |
             Manifest: twrp-12.1
             Device: pq83p02
