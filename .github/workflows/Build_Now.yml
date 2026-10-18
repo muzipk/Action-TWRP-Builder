@@ -57,18 +57,16 @@ jobs:
           source build/envsetup.sh
           export ALLOW_MISSING_DEPENDENCIES=true
           lunch twrp_pq83p02-eng
-          # 移除 make clean，防止浪费时间。优先编译 recoveryimage，失败了就编译 bootimage
-          make recoveryimage -j$(nproc) || make bootimage -j$(nproc)
+          # 强制重新编译，防止 no work to do
+          make -B recoveryimage -j$(nproc) || make -B bootimage -j$(nproc)
         working-directory: workspace
 
-      # 增强版侦察兵：全盘搜索所有的 .img 文件
+      # 修复路径，直接找当前的 out 目录
       - name: Check Output
         run: |
           echo "全盘搜索生成的镜像文件..."
           find workspace/out -type f -name "*.img" || true
-        working-directory: workspace
 
-      # 直接把所有的 img 抓取上传
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
