@@ -1,0 +1,71 @@
+name: Build TWRP
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Out
+        uses: actions/checkout@v4
+
+      - name: Cleanup
+        uses: rokibhasansagar/slimhub_actions@main
+
+      - name: Prepare the environment
+        run: |
+          sudo apt update
+          sudo apt install -y python3 git curl wget unzip zip openjdk-8-jdk
+
+      - name: Install repo
+        run: |
+          mkdir ~/bin
+          curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+          chmod a+x ~/bin/repo
+          sudo ln -sf ~/bin/repo /usr/bin/repo
+
+      - name: Initialize repo
+        run: |
+          mkdir workspace
+          cd workspace
+          repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
+
+      - name: Repo Sync
+        run: |
+          cd workspace
+          repo sync -j$(nproc --all) --force-sync
+
+      - name: Clone device tree
+        run: |
+          cd workspace
+          git clone https://github.com/muzipk/device_nubia_pq83p02 -b main ./device/nubia/pq83p02
+
+      - name: Set Swap Space
+        uses: pierotofy/set-swap-space@master
+        with:
+          swap-size-gb: 12
+
+      - name: Building recovery
+        run: |
+          sed -i 's/rsync -a/rsync -a --force --exclude=etc --exclude=sdcard --exclude=vendor --exclude=cache/g' build/core/Makefile
+          source build/envsetup.sh
+          export ALLOW_MISSING_DEPENDENCIES=true
+          lunch twrp_pq83p02-eng && make clean && make recoveryimage -j$(nproc)
+        working-directory: workspace
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            workspace/out/target/product/pq83p02/*.img
+          name: pq83p02-newbuild
+          tag_name: newbuild-${{ github.run_id }}
+          body: |
+            Manifest: twrp-12.1
+            Device: pq83p02
+            Target: recovery.img
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
