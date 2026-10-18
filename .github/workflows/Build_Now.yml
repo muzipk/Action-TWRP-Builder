@@ -59,7 +59,7 @@ jobs:
           lunch twrp_pq83p02-eng
           # 先清理，再正常编译，去掉不支持的 -B 参数
           make clean
-          make recoveryimage -j$(nproc) || make bootimage -j$(nproc)
+          make vendor_bootimage -j$(nproc) || make bootimage -j$(nproc)
         working-directory: workspace
 
       - name: Check Output
